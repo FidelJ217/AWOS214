@@ -1,0 +1,20 @@
+#IMPORTAMOS LA IMÁGEN BASE
+FROM python:3.12-slim
+#CREAMOS LA CARPETA DE TRABAJO DEL CONTENEDOR
+WORKDIR /app
+
+#COPIAR REQUERIMENTOS DEL PROYECTO
+COPY requirements.txt . 
+RUN pip install --no-cache-dir -r requirements.txt
+
+#COPIAR EL PROYECTO
+COPY ./app ./app
+
+#EXPONEMOS EL PUERTO se utiliza comúnmente en desarrollo de software para probar aplicaciones localmente, actuando como un servidor web
+EXPOSE 5000
+
+#COMANDOS PARA EJECUTAR FASTAPI
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0","--port","5000","--reload"]
+
+#EN BASE A UNA IMAGEN QUE YA ESTA, CREAME UNA IMAGEN PROPIA QUE TENGA FAST API Y UVICRON QUE SE MUESTRE EN EL SERVIDOR 5000 
+#Y CUANDO SE EJECUTE LE INDICAMOS LOS COMANDOS PARA QUE SIRVA
