@@ -74,15 +74,31 @@ async def crear_usuarios(usuario:dict):
 async def actualizar_usuarios(usuario:dict):
     for usr in usuarios:
         if usr["id"] == usuario.get("id"):
-            raise HTTPException(
-                status_code=400,
-                detail=""
-            )
-    return{
-        "status":"200",
-        "total":len(usuarios),
-        "usuarios":usuarios
-    }
-    
+            usuario.update(usuario) 
+            return {
+                "status": "200",
+                "mensaje": "Usuario actualizado",
+                "usuario": usuario
+            }
 
+    raise HTTPException(
+        status_code=404,
+        detail="Usuario no encontrado"
+    )
+    
+@app.delete("/v1/usuarios/{id}", tags=['CRUD HTTP'])
+async def eliminar_usuario(id: int):
+    for usr in usuarios:
+        if usr["id"] == id:
+            usuarios.remove(usr)
+            return {
+                "status": "200",
+                "mensaje": "Usuario eliminado",
+                "usuario": usr
+            }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Usuario no encontrado"
+    )
 
