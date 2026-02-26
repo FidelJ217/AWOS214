@@ -1,6 +1,7 @@
 from fastapi import FastAPI, status, HTTPException
 import asyncio
 from typing import Optional
+from pydantic import BaseModel, Field
 
 # ==================INSTANCIA DEL SERVIDOR==================
 app = FastAPI(
@@ -17,6 +18,16 @@ usuarios=[
     {"id":3, "nombre":"Sofi","edad":21 },
 ]
 
+#MODELO DE VALIDACIÓN PYDANTIC 
+#AGEGAR Y ACTUALIZA SI LO OCUPAN
+class usuario_create(BaseModel):
+    id: int =Field(...,gt=0,description="Identificación de usuario")
+    nombre:str = Field(...,min_legth=3,max_length=50, example="Juanita")
+    edad: int =Field(...,ge=1,le=123,description="Edad valida entre 1 y 123")
+
+
+class usuario_delete(BaseModel):
+    id: int =Field(...,gt=0,description="Identificación de usuario")
 #================== ENDPOINTS==================
 
 @app.get("/", tags=['Inicio'])
@@ -55,9 +66,9 @@ async def leer_usuarios():
 
 #ENDPOINT TIPO POST
 @app.post("/v1/usuarios/", tags=['CRUD HTTP'])
-async def crear_usuarios(usuario:dict):
+async def crear_usuarios(usuario:usuario_create):
     for usr in usuarios:
-        if usr["id"] == usuario.get("id"):
+        if usr["id"] == usuario.id:
             raise HTTPException(
                 status_code=400,
                 detail="El id ya existe"
@@ -87,7 +98,7 @@ async def actualizar_usuarios(usuario:dict):
     )
     
 @app.delete("/v1/usuarios/{id}", tags=['CRUD HTTP'])
-async def eliminar_usuario(id: int):
+async def eliminar_usuario(id:int):
     for usr in usuarios:
         if usr["id"] == id:
             usuarios.remove(usr)
@@ -101,4 +112,6 @@ async def eliminar_usuario(id: int):
         status_code=404,
         detail="Usuario no encontrado"
     )
+
+
 
