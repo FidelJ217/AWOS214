@@ -1,10 +1,5 @@
-from fastapi import FastAPI, status, HTTPException,Depends
-import asyncio
-from typing import Optional
-from pydantic import BaseModel, Field
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-import secrets 
-
+from fastapi import FastAPI
+from app.routers import usuarios, varios
 
 # ==================INSTANCIA DEL SERVIDOR==================
 app = FastAPI(
@@ -12,125 +7,21 @@ app = FastAPI(
     description= 'Fidel Juárez',
     version='1.0.0'
     )
+app.include_router(usuarios.router)
+app.include_router(varios.router)
+# =================TB FICTICIA  ==================
 
-# ==================TB FICTICIA ==================
+# =================VALIDACIONES =============
+#==================SEGURIDAD    ===============
 
-usuarios=[
-    {"id":1, "nombre":"Juan","edad":21 },
-    {"id":2, "nombre":"Israel","edad":21 },
-    {"id":3, "nombre":"Sofi","edad":21 },
-]
-
-#MODELO DE VALIDACIÓN PYDANTIC 
-#AGEGAR Y ACTUALIZA SI LO OCUPAN
-class usuario_create(BaseModel):
-    id: int =Field(...,gt=0,description="Identificación de usuario")
-    nombre:str = Field(...,min_legth=3,max_length=50, example="Juanita")
-    edad: int =Field(...,ge=1,le=123,description="Edad valida entre 1 y 123")
+#==================ENDPOINTS    ==================
 
 
-class usuario_delete(BaseModel):
-    id: int =Field(...,gt=0,description="Identificación de usuario")
-
-#SEGURIDAD HTTP BASIC
-security = HTTPBasic()
-
-def verificar_Peticion(credenciales: HTTPBasicCredentials = Depends(security)):
-    userAuth = secrets.compare_digest(credenciales.username, "Fidel")
-    passAuth = secrets.compare_digest(credenciales.password, "123456")
-
-    if not (userAuth and passAuth):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales no autorizadas"
-        )
-
-    return credenciales.username
-
-#================== ENDPOINTS==================
-
-@app.get("/", tags=['Inicio'])
-async def bienvenida():
-    return{"Mensaje": "!Bienvenido a mi API"}
-
-@app.get("/HolaMundo", tags=['Bienvenida Asíncrona '])
-async def hola():
-    await asyncio.sleep(1)  #Lo mandas a dormir || SIMULACIÓN DE UNA PETICIÓN
-    return{
-        "mensaje":"!Bienvendio a mi API ",
-        "Estatuos":"200"
-        }
-@app.get("/v1/usuario/ {id}", tags=['Parametro Obligatorio'])
-async def consultaUno(id:int):
-    return{"Se encontro usuario": id}
-
-@app.get("/v1/parametroOp/", tags=['Parametro Opcional'])
-async def consultaTodos(id:Optional[int]=None):
-    if id is not None:
-        for usuariok in usuarios:
-            if usuariok["id"] == id:
-                return{"mensaje": "usuario encontrado", "usuario": usuariok}
-        return{"mensaje": "usuario no encontrado","usuario":id}
-    else:
-        return{"mensaje": "No se proporciono id" }
 
 
-@app.get("/v1/usuarios/", tags=['CRUD HTTP'])
-async def leer_usuarios():
-    return{
-        "status":"200",
-        "total":len(usuarios),
-        "usuarios":usuarios
-    }
 
-#ENDPOINT TIPO POST
-@app.post("/v1/usuarios/", tags=['CRUD HTTP'])
-async def crear_usuarios(usuario:usuario_create):
-    for usr in usuarios:
-        if usr["id"] == usuario.id:
-            raise HTTPException(
-                status_code=400,
-                detail="El id ya existe"
-            )
-    usuarios.append(usuario)
-    return{
-        "status":"200",
-        "total":len(usuarios),
-        "usuarios":usuarios
-    }
 
-#ENDPOINT TIPO PUT
-@app.put("/v1/usuarios/", tags=['CRUD HTTP'])
-async def actualizar_usuarios(usuario:dict):
-    for usr in usuarios:
-        if usr["id"] == usuario.get("id"):
-            usuario.update(usuario) 
-            return {
-                "status": "200",
-                "mensaje": "Usuario actualizado",
-                "usuario": usuario
-            }
 
-    raise HTTPException(
-        status_code=404,
-        detail="Usuario no encontrado"
-    )
-    
-@app.delete("/v1/usuarios/{id}", tags=['CRUD HTTP'])
-async def eliminar_usuario(id: int, userAuth: str = Depends(verificar_Peticion)):
-    for usr in usuarios:
-        if usr["id"] == id:
-            usuarios.remove(usr)
-            return {
-                "status": "200",
-                "mensaje": f"Usuario eliminado correctamente por: {userAuth}",
-                "usuario": usr
-            }
-
-    raise HTTPException(
-        status_code=404,
-        detail="Usuario no encontrado"
-    )
 
 
 
