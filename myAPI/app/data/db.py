@@ -6,7 +6,7 @@ import os
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://admin:123456@postgres:5434/DB_miapi" 
+    "postgresql://admin:123456@postgres:5432/DB_miapi" 
 )
 
 #2.Crearemos el motor de conexión
@@ -18,3 +18,14 @@ SessionLocal = sessionmaker(
     autoflush= False,
     bind= engine
 )
+
+#4. Base Declarativa para modelos
+Base= declarative_base()
+
+#5. Función para la sesión en cada peticion D
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

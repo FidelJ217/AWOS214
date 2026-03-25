@@ -4,6 +4,11 @@ from app.models.usuario import usuario_create
 from app.data.database import usuarios
 from app.security.auth import verificar_Peticion
 
+from sqlalchemy.orm import Session
+from app.data.db import get_db
+from app.data.usuario import Usuario as usuarioDB
+
+
 #Objeto router que estara instanciado
 router = APIRouter(
     prefix="/v1/usuarios", tags=['CRUD HTTP']
@@ -12,27 +17,29 @@ router = APIRouter(
 # ==================Endpoint GET ==================
 
 @router.get("/")
-async def leer_usuarios():
+async def leer_usuarios(db:Session= Depends(get_db)): #AQUI ESTAMOS LLAMANDO LA BASE DE DATOS
+    
+    queryUsers=db.query(usuarioDB).all()  #AQUI LO ESTAMOS GUARDANDO CON QUERYUSER  
+    
     return{
         "status":"200",
-        "total":len(usuarios),
-        "usuarios":usuarios
+        "total":len(queryUsers),
+        "usuarios":queryUsers
     }
 
 # ==================Endpoint POST ==================
 @router.post("/", status_code=status.HTTP_200_OK)
-async def crear_usuarios(usuario:usuario_create):
-    for usr in usuarios:
-        if usr["id"] == usuario.id:
-            raise HTTPException(
-                status_code=400,
-                detail="El id ya existe"
-            )
-    usuarios.append(usuario)
+async def crear_usuarios(usuarioP:usuario_create, db:Session = Depends(get_db)):
+
+    nuevoUsuario = usuarioDB(nombre = usuarioP.nombre, edad = usuarioP.edad)
+    db.add(nuevoUsuario)
+    db.commit()
+    db.refresh(nuevoUsuario)
+
     return{
-        "status":"200",
-        "total":len(usuarios),
-        "usuarios":usuarios
+        "mensaje":"Usuario Agregado",
+        "Usuario": nuevoUsuario
+
     }
 
 # ==================Endpoint PUT ==================
